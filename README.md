@@ -1,8 +1,20 @@
 # CallSimulator.jl
 
 [![CI](https://github.com/mashu/CallSimulator.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/mashu/CallSimulator.jl/actions/workflows/ci.yml)
-[![Coverage](https://codecov.io/gh/mashu/CallSimulator.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/mashu/CallSimulator.jl)
+[![Coverage](https://codecov.io/gh/mashu/CallSimulator.jl/graph/badge.svg)](https://codecov.io/gh/mashu/CallSimulator.jl/branch/main)
 [![Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://mashu.github.io/CallSimulator.jl/stable)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Simulate V/D/J gene call tables (MIAIRR-style) with ground-truth phased genotype. Outputs both simulated calls and reference truth; default preset uses KI donor–estimated values.
+Simulate MIAIRR-style V/D/J call tables with ground-truth phased genotype for testing phasing and assignment. Each read has one V, one D, one J from the same chromosome; the simulator records true alleles and applied noise.
+
+## Example
+
+```julia
+using CallSimulator
+
+config = SimulatorConfig(n_reads = 10_000, output_path = "calls.tsv")
+sim = Simulator(config, ki_donor_preset())
+calls_df, genotype_df, truth_phase_df = simulate(sim)
+write_simulation_output(calls_df, genotype_df, truth_phase_df;
+    calls_path = "calls.tsv", genotype_path = "genotype.tsv", truth_phase_path = "truth_phase.tsv")
+```

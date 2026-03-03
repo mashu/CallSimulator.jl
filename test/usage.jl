@@ -1,25 +1,26 @@
-@testset "Usage" begin
-    g1 = Gene("V1", :V, "V1*01", "V1*02")
-    g2 = Gene("J1", :J, "J1*01")
-    gt = Genotype("donor", [g1, g2])
+# Expression profile replaces old WeightedUsage; test build_expression and sampling.
+@testset "Expression (build_expression, ExpressionProfile functor)" begin
+    gt = build_genotype(
+        "donor",
+        ZygositySpec(hom=1, het=1, hemi=0),
+        ZygositySpec(hom=0, het=0, hemi=0),
+        ZygositySpec(hom=1, het=0, hemi=0);
+        pool_v = ["V1", "V2"],
+        pool_d = String[],
+        pool_j = ["J1"],
+        rng = Random.MersenneTwister(1),
+    )
+    ep = build_expression(gt; rng = Random.MersenneTwister(1), method = UniformExpr())
+    @test ep isa ExpressionProfile
+    @test !isempty(weights(ep, V, 1))
+    @test !isempty(weights(ep, J, 1))
 
-    u = uniform_usage(gt)
-    @test length(u.v) == 2
-    @test length(u.j) == 1
-    @test all(p -> p.second == 1.0, u.v)
+    rng = Random.MersenneTwister(2)
+    idx_v = ep(rng, gt, V, 1)
+    idx_j = ep(rng, gt, J, 1)
+    @test 1 <= idx_v <= length(gt.genes_v)
+    @test 1 <= idx_j <= length(gt.genes_j)
 
-    rng = Random.MersenneTwister(1)
-    u2 = skewed_usage(gt; rng = rng, lognormal_sigma = 0.5, allele_imbalance = 1.0)
-    @test length(u2.v) == 2
-    @test length(u2.j) == 1
-    allele = u2(rng, :V, ["V1*01", "V1*02"])
-    @test allele in ["V1*01", "V1*02"]
-    allele_j = u2(rng, :J, ["J1*01"])
-    @test allele_j == "J1*01"
-
-    u3 = skewed_usage(gt; rng = Random.MersenneTwister(2), anchor_j_fraction = 0.3)
-    @test length(u3.j) == 1
-
-    # skewed_usage_kde stub when KernelDensity not loaded
-    @test_throws ErrorException skewed_usage_kde(gt, [0.0, 0.5, 1.0])
+    ep2 = build_expression(gt; rng = Random.MersenneTwister(3), method = LogNormalExpr(0.5), anchor_j_fraction = 0.3)
+    @test ep2 isa ExpressionProfile
 end

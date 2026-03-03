@@ -1,39 +1,51 @@
-@testset "Genotype" begin
-    g_hom = Gene("IGHV1-2", :V, "IGHV1-2*01")
-    @test g_hom.allele_a == g_hom.allele_b
-    @test !is_heterozygous(g_hom)
+@testset "Genotype (DonorGenotype, GeneEntry{L})" begin
+    g_hom = homozygous_gene("IGHV1-2", V, "IGHV1-2*01")
+    @test g_hom isa GeneEntry{V}
+    @test zygosity(g_hom) == Homozygous
+    @test is_available(g_hom, 1) && is_available(g_hom, 2)
+    @test allele_on(g_hom, 1) == "IGHV1-2*01"
 
-    g_het = Gene("IGHJ1", :J, "IGHJ1*01", "IGHJ1*02")
-    @test is_heterozygous(g_het)
+    g_het = heterozygous_gene("IGHJ1", J, "IGHJ1*01", "IGHJ1*02")
+    @test zygosity(g_het) == Heterozygous
+    @test is_available(g_het, 1) && is_available(g_het, 2)
+    @test allele_on(g_het, 2) == "IGHJ1*02"
 
-    gt = Genotype("donor1", [g_hom, g_het])
-    @test length(gt) == 2
-    @test allele_on_chr(gt, 1, 1) == "IGHV1-2*01"
-    @test allele_on_chr(gt, 2, 2) == "IGHJ1*02"
-    @test locus_of(gt, 1) === :V
-    @test locus_of(gt, 2) === :J
+    g_hemi = hemizygous_gene("IGHD1-1", D, "IGHD1-1*01"; on_chr=1)
+    @test zygosity(g_hemi) == Hemizygous
+    @test is_available(g_hemi, 1) && !is_available(g_hemi, 2)
+    @test allele_on(g_hemi, 1) == "IGHD1-1*01"
+    @test_throws Exception allele_on(g_hemi, 2)
 
-    v_list, d_list, j_list = locus_alleles(gt)
-    @test length(v_list) == 1
-    @test length(d_list) == 0
-    @test length(j_list) == 1
-    @test v_list[1] == (1, "IGHV1-2*01", "IGHV1-2*01")
-    @test j_list[1][2] != j_list[1][3]
+    gt = build_genotype(
+        "donor1",
+        ZygositySpec(hom=1, het=1, hemi=0),
+        ZygositySpec(hom=0, het=0, hemi=0),
+        ZygositySpec(hom=1, het=1, hemi=0);
+        pool_v = ["V1", "V2", "V3"],
+        pool_d = ["D1"],
+        pool_j = ["J1", "J2", "J3"],
+        rng = Random.MersenneTwister(123),
+    )
+    @test gt isa DonorGenotype
+    @test gt.donor_id == "donor1"
+    @test length(genes(gt, V)) == 2
+    @test length(genes(gt, J)) == 2
+    @test has_locus(gt, V) && has_locus(gt, J)
 
-    pool_v = ["V1", "V2", "V3"]
-    pool_d = ["D1", "D2"]
-    pool_j = ["J1", "J2"]
-    gt2 = build_genotype("d2", 1, 1, 0, 1, 1, 0; gene_pool_v = pool_v, gene_pool_d = pool_d, gene_pool_j = pool_j, rng = Random.MersenneTwister(123))
-    @test gt2.donor == "d2"
-    n_genes = length(gt2.genes)
-    @test n_genes >= 4
-    n_j_het = count(g -> g.locus === :J && is_heterozygous(g), gt2.genes)
-    @test n_j_het == 1
+    gt2 = build_donor_genotype("d2"; pool_v = ["V1", "V2", "V3"], pool_d = ["D1", "D2"], pool_j = ["J1", "J2"], n_j_het_range = (1, 1), rng = Random.MersenneTwister(456))
+    @test length(gt2.genes_j) >= 1
+    @test any(zygosity(g) == Heterozygous for g in gt2.genes_j)
 
-    gt3 = build_genotype_realistic("d3", pool_v, pool_d, pool_j; n_j_het_range = (1, 1), n_v_het_range = (1, 1), rng = Random.MersenneTwister(456))
-    @test length(gt3.genes) >= 4
-    j_genes = [g for g in gt3.genes if g.locus === :J]
-    @test any(is_heterozygous, j_genes)
+    @test_throws ArgumentError build_donor_genotype("x"; pool_j = ["J1"], n_j_het_range = (0, 0), rng = Random.MersenneTwister(0))
 
-    @test_throws ArgumentError build_genotype_realistic("x", ["V1"], ["D1"], ["J1"]; n_j_het_range = (0, 0), rng = Random.MersenneTwister(0))
+    # Display: show(io, MIME("text/plain"), gt) and zygosity_counts
+    io = IOBuffer()
+    show(io, MIME("text/plain"), gt)
+    s = String(take!(io))
+    @test occursin("DonorGenotype", s)
+    @test occursin("genes", s)
+    c = zygosity_counts(gt, V)
+    @test c.homozygous + c.heterozygous + c.hemizygous == length(gt.genes_v)
+    show(io, MIME("text/plain"), gt.genes_v[1])
+    @test occursin("GeneEntry", String(take!(io)))
 end

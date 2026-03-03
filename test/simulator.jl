@@ -5,13 +5,19 @@
         seed = 12345,
         output_path = "calls.tsv",
         subject_id = "sim_donor",
+        noise = NoiseConfigNone,  # no noise so all calls are from genotype
     )
     estimated = ki_donor_preset()
     sim = Simulator(config, estimated; rng = Random.MersenneTwister(42))
     calls_df, genotype_df, truth_phase_df = simulate(sim)
 
     @test nrow(calls_df) == 100
-    @test names(calls_df) == ["subject", "sequence_id", "v_call", "d_call", "j_call", "d_germline_start", "d_germline_end", "locus", "productive"]
+    @test "subject" in names(calls_df)
+    @test "v_call" in names(calls_df)
+    @test "d_call" in names(calls_df)
+    @test "j_call" in names(calls_df)
+    @test "duplicate_count" in names(calls_df)
+    @test "true_chr" in names(calls_df)
     @test all(calls_df.subject .== "sim_donor")
     @test all(calls_df.locus .== "IGH")
 
@@ -24,10 +30,7 @@
     @test all_v ⊆ gt_alleles_v
     @test all_j ⊆ gt_alleles_j
 
-    @test RABHIT_MIN_UNIQUE_VDJ == 2000
-
-    sim2 = Simulator(config, estimated)
-    out = sim2()
+    out = sim()
     @test length(out) == 3
     @test out[1] isa DataFrame
 end

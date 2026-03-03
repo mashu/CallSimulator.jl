@@ -1,33 +1,17 @@
-# Config.jl: User-facing configuration for the call simulator.
-# All fields are concrete types; no Any, no try-catch.
+# Config.jl: SimulatorConfig holds run settings (read count, noise, output paths, etc.).
 
 """
-    MissCallConfig
+    SimulatorConfig(; n_reads, min_unique_vdj=0, seed=0, output_path="calls.tsv", subject_id="sim_donor", noise=NoiseConfig(), anchor_j_fraction=nothing, mean_duplicate_count=1.3, cis_sigma=0.35)
 
-Per-locus miss-call probabilities for V, D, and J. With probability p the true allele
-is replaced by the other allele (heterozygous) or left unchanged (homozygous).
-Optional per-gene overrides for the V locus only (gene name => probability); D and J
-use a single probability per locus.
-"""
-struct MissCallConfig
-    p_v::Float64
-    p_d::Float64
-    p_j::Float64
-    per_gene_v::Vector{Pair{String, Float64}}
-end
-
-function MissCallConfig(p_v::Real, p_d::Real, p_j::Real;
-                        per_gene_v::Vector{Pair{String, Float64}} = Pair{String, Float64}[])
-    (0.0 <= p_v <= 1.0 && 0.0 <= p_d <= 1.0 && 0.0 <= p_j <= 1.0) ||
-        throw(ArgumentError("Miss-call rates must be in [0, 1]"))
-    MissCallConfig(Float64(p_v), Float64(p_d), Float64(p_j), per_gene_v)
-end
-
-"""
-    SimulatorConfig
-
-User-controlled settings: read count, RAbHIT constraint, RNG seed, output path,
-subject id, miss-call config, and optional anchor J fraction override.
+Run settings for the simulator. Purpose of main fields:
+- `n_reads`: how many reads (rows) to generate.
+- `min_unique_vdj`: if > 0, keep sampling until this many unique (V,D,J) combinations (e.g. for RAbHIT).
+- `seed`: RNG seed for reproducibility.
+- `output_path`, `subject_id`: where to write and how to name the donor in output.
+- `noise`: call-corruption config (allele swap, gene confusion, D dropout, novel allele); use `NoiseConfigNone` for no corruption.
+- `anchor_j_fraction`: optional fraction of reads using an anchor J gene (phasing studies).
+- `mean_duplicate_count`: mean value for the `duplicate_count` column per read.
+- `cis_sigma`: scale of per-chromosome expression skew (log-normal).
 """
 struct SimulatorConfig
     n_reads::Int
@@ -35,8 +19,10 @@ struct SimulatorConfig
     seed::UInt32
     output_path::String
     subject_id::String
-    miss_call::MissCallConfig
+    noise::NoiseConfig
     anchor_j_fraction::Union{Nothing, Float64}
+    mean_duplicate_count::Float64
+    cis_sigma::Float64
 end
 
 function SimulatorConfig(;
@@ -45,21 +31,28 @@ function SimulatorConfig(;
     seed::Integer = 0,
     output_path::String = "calls.tsv",
     subject_id::String = "sim_donor",
-    miss_call::MissCallConfig = MissCallConfig(0.05, 0.12, 0.03),
-    anchor_j_fraction::Union{Nothing, Real} = nothing)
+    noise::NoiseConfig = NoiseConfig(),
+    anchor_j_fraction::Union{Nothing, Real} = nothing,
+    mean_duplicate_count::Real = 1.3,
+    cis_sigma::Real = 0.35,
+)
     n_reads > 0 || throw(ArgumentError("n_reads must be positive"))
     min_unique_vdj >= 0 || throw(ArgumentError("min_unique_vdj must be non-negative"))
+    mean_duplicate_count >= 1.0 || throw(ArgumentError("mean_duplicate_count must be >= 1"))
+    cis_sigma >= 0.0 || throw(ArgumentError("cis_sigma must be non-negative"))
     anc = anchor_j_fraction === nothing ? nothing : Float64(anchor_j_fraction)
-    if anc !== nothing
-        (anc > 0.0 && anc < 1.0) || throw(ArgumentError("anchor_j_fraction must be in (0, 1)"))
-    end
+    (anc === nothing || (0.0 < anc < 1.0)) || throw(ArgumentError("anchor_j_fraction must be in (0, 1)"))
     SimulatorConfig(
         n_reads,
         min_unique_vdj,
         UInt32(seed & 0xffffffff),
         output_path,
         subject_id,
-        miss_call,
+        noise,
         anc,
+        Float64(mean_duplicate_count),
+        Float64(cis_sigma),
     )
 end
+
+const RABHIT_MIN_UNIQUE_VDJ = 2000

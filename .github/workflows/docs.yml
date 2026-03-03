@@ -1,56 +1,36 @@
-name: Docs
+name: Documentation
 
 on:
   push:
-    branches: [main, master]
+    branches:
+      - main
+    tags: ['*']
   pull_request:
-    branches: [main, master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build-docs:
-    name: Build and deploy documentation
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      statuses: write
+      pull-requests: read
     steps:
       - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
         with:
-          fetch-depth: 0
-
-      - name: Create gh-pages branch if it does not exist
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+          version: '1'
+      - uses: julia-actions/cache@v2
+      - name: Install dependencies
         run: |
-          git fetch origin gh-pages 2>/dev/null || true
-          if ! git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
-            git checkout --orphan gh-pages
-            git rm -rf . 2>/dev/null || true
-            touch .nojekyll
-            git add .nojekyll
-            git commit -m "Initialize gh-pages"
-            git push origin gh-pages
-            git checkout -
-          fi
-
-      - name: Set up Julia
-        uses: julia-actions/setup-julia@v1
-        with:
-          version: '1.10'
-
-      - name: Cache packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.julia
-          key: ${{ runner.os }}-julia-docs-${{ hashFiles('**/Project.toml', 'docs/Project.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-julia-docs-
-
-      - name: Build and deploy documentation
+          julia --project=docs -e '
+            using Pkg
+            Pkg.develop(PackageSpec(path=pwd()))
+            Pkg.instantiate()'
+      - name: Build and deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: julia -e '
-          using Pkg
-          Pkg.activate("docs")
-          Pkg.develop(Pkg.PackageSpec(path=pwd()))
-          Pkg.instantiate()
-          include("docs/make.jl")
-        '
+        run: julia --project=docs docs/make.jl

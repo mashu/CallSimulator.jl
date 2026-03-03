@@ -1,4 +1,6 @@
-# CallSimulator.jl: Simulate V/D/J call tables (MIAIRR-style) with ground-truth phased genotype.
+# CallSimulator.jl: Simulate V/D/J call tables (MIAIRR-style) with phased genotype.
+# Idiomatic Julia: Locus types (V, D, J), AlleleState hierarchy, parametric GeneEntry{L},
+# locus-indexed DonorGenotype, callable ExpressionProfile and NoiseModel.
 
 module CallSimulator
 
@@ -8,48 +10,43 @@ using Random
 using ArgParse
 using Requires
 
+include("Types.jl")
+include("GenePools.jl")
+include("GenotypeBuilder.jl")
+include("Expression.jl")
+include("Noise.jl")
 include("Config.jl")
 include("Empirical.jl")
-include("Genotype.jl")
-include("Usage.jl")
-include("MissCall.jl")
 include("Output.jl")
 include("Simulator.jl")
+include("Validation.jl")
 include("CLI.jl")
 
-function __init__()
-    @require KernelDensity = "5ab0869b-81e5-5117-8b39-4d8f8c2e4c2a" include("EmpiricalKDE.jl")
-end
-
-export SimulatorConfig,
-    MissCallConfig,
-    EmpiricalParams,
-    ki_donor_preset,
-    Gene,
-    Genotype,
-    is_heterozygous,
-    allele_on_chr,
-    locus_of,
-    locus_alleles,
-    WeightedUsage,
-    BernoulliMissCall,
-    miss_prob,
-    Simulator,
-    simulate,
-    build_genotype,
-    build_genotype_realistic,
-    uniform_usage,
-    skewed_usage,
-    skewed_usage_kde,
-    build_calls_df,
-    genotype_table,
-    truth_phase_table,
-    write_calls,
-    write_genotype,
-    write_truth_phase,
-    write_simulation_output,
-    config_from_args,
-    run_cli,
-    RABHIT_MIN_UNIQUE_VDJ
+export
+    # Locus & types
+    Locus, V, D, J,
+    AlleleState, Present, Deleted,
+    GeneEntry, DonorGenotype,
+    Zygosity, Homozygous, Heterozygous, Hemizygous,
+    zygosity, zygosity_short, zygosity_counts, is_available, is_present, allele_on, allele_display_string, phase_allele_string, genes, has_locus,
+    homozygous_gene, heterozygous_gene, hemizygous_gene,
+    # Gene pools & genotype build
+    default_gene_pool, confusion_pairs,
+    ZygositySpec, build_donor_genotype,
+    # Expression
+    ExpressionMethod, LogNormalExpr, ZipfExpr, DirichletExpr, UniformExpr,
+    ExpressionProfile, build_expression, weights,
+    # Noise
+    NoiseConfig, NoiseModel, NoiseConfigNone,
+    NoiseType, NoNoise, AlleleSwap, GeneConfusion, D_Dropout, NovelAllele,
+    noise_type_string,
+    # Config & run
+    SimulatorConfig,
+    EmpiricalParams, ki_donor_preset,
+    genotype_table, truth_phase_table, build_calls_df,
+    write_calls, write_genotype, write_truth_phase, write_simulation_output,
+    Simulator, simulate,
+    check_airr_columns, summarize_simulation, compare_with_real, gini,
+    run_cli
 
 end

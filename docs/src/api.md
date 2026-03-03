@@ -4,5 +4,5 @@ Public API of CallSimulator. Returns MIAIRR-style calls and the reference phased
 
 ```@autodocs
 Modules = [CallSimulator]
-Order = [:type, :function]
+Order = [:type, :function, :constant]
 ```

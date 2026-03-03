@@ -46,6 +46,34 @@ function parse_commandline()
             help = "Miss-call probability for J"
             arg_type = Float64
             default = 0.03
+        "--p-d-dropout"
+            help = "D-call dropout probability (ambiguous/empty D)"
+            arg_type = Float64
+            default = 0.2
+        "--p-gene-confusion-v"
+            help = "V cross-gene confusion probability"
+            arg_type = Float64
+            default = 0.02
+        "--p-gene-confusion-d"
+            help = "D cross-gene confusion probability"
+            arg_type = Float64
+            default = 0.01
+        "--p-gene-confusion-j"
+            help = "J cross-gene confusion probability"
+            arg_type = Float64
+            default = 0.0
+        "--p-novel-allele"
+            help = "Novel allele call probability"
+            arg_type = Float64
+            default = 0.002
+        "--mean-duplicate-count"
+            help = "Mean duplicate_count for PCR/sequencing duplicates"
+            arg_type = Float64
+            default = 1.3
+        "--cis-sigma"
+            help = "Chromosome-specific cis-effect sigma for expression"
+            arg_type = Float64
+            default = 0.35
         "--anchor-j-fraction"
             help = "Fraction of reads carrying anchor J (empty = use default from empirical)"
             arg_type = String
@@ -61,10 +89,15 @@ function config_from_args(args::Dict{String, T}) where T
     if anchor_frac !== nothing
         (anchor_frac > 0.0 && anchor_frac < 1.0) || throw(ArgumentError("--anchor-j-fraction must be in (0, 1)"))
     end
-    miss = MissCallConfig(
-        args["p-v"],
-        args["p-d"],
-        args["p-j"],
+    noise = NoiseConfig(
+        p_allele_v = args["p-v"],
+        p_allele_d = args["p-d"],
+        p_allele_j = args["p-j"],
+        p_gene_v = args["p-gene-confusion-v"],
+        p_gene_d = args["p-gene-confusion-d"],
+        p_gene_j = args["p-gene-confusion-j"],
+        p_d_dropout = args["p-d-dropout"],
+        p_novel = args["p-novel-allele"],
     )
     SimulatorConfig(
         n_reads = args["n-reads"],
@@ -72,8 +105,10 @@ function config_from_args(args::Dict{String, T}) where T
         seed = args["seed"],
         output_path = args["output"],
         subject_id = args["subject"],
-        miss_call = miss,
+        noise = noise,
         anchor_j_fraction = anchor_frac,
+        mean_duplicate_count = args["mean-duplicate-count"],
+        cis_sigma = args["cis-sigma"],
     )
 end
 

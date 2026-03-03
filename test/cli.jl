@@ -10,9 +10,16 @@
         "p-v" => 0.05,
         "p-d" => 0.12,
         "p-j" => 0.03,
+        "p-d-dropout" => 0.2,
+        "p-gene-confusion-v" => 0.02,
+        "p-gene-confusion-d" => 0.01,
+        "p-gene-confusion-j" => 0.0,
+        "p-novel-allele" => 0.002,
+        "mean-duplicate-count" => 1.3,
+        "cis-sigma" => 0.35,
         "anchor-j-fraction" => "",
     )
-    config = config_from_args(args)
+    config = CallSimulator.config_from_args(args)
     @test config.n_reads == 50
     @test config.output_path == "calls_cli.tsv"
     @test config.subject_id == "cli_donor"

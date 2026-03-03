@@ -14,7 +14,7 @@ makedocs(
     pages = [
         "Home" => "index.md",
         "Standalone usage" => "standalone.md",
-        "Miss-call model" => "misscall.md",
+        "Noise model" => "noise.md",
         "API reference" => "api.md",
     ],
 )
