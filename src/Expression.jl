@@ -19,13 +19,7 @@ Base.size(cw::ChromosomeWeights) = size(cw.data)
 Base.getindex(cw::ChromosomeWeights, i::Int) = cw.data[i]
 Base.IndexStyle(::Type{<:ChromosomeWeights}) = IndexLinear()
 
-function Base.show(io::IO, ::MIME"text/plain", cw::ChromosomeWeights)
-    n = length(cw.data)
-    print(io, "ChromosomeWeights(", n, " genes, gene_index => weight):\n")
-    for p in cw.data
-        print(io, " ", p, "\n")
-    end
-end
+# Show for ChromosomeWeights (text/plain) is defined in ExpressionPlots.jl (UnicodePlots bar chart).
 
 struct LocusWeights
     chr1::ChromosomeWeights
@@ -161,12 +155,16 @@ function rescale_anchor_j!(
         zygosity(g) == Heterozygous && push!(het_j_idx, i)
     end
     isempty(het_j_idx) && return
+    anchor1 = sum(w for (i, w) in wj1 if i in het_j_idx)
+    anchor2 = sum(w for (i, w) in wj2 if i in het_j_idx)
+    total1 = sum(last, wj1)
+    total2 = sum(last, wj2)
+    anchor_tot = anchor1 + anchor2
+    other_tot = total1 + total2 - anchor_tot
+    (anchor_tot > 0 && other_tot > 0) || return
+    # One scale for both chromosomes so overall anchor fraction is target_frac and chr1/chr2 imbalance is preserved
+    scale = (target_frac * other_tot / (1 - target_frac)) / anchor_tot
     for wj in (wj1, wj2)
-        total = sum(last, wj)
-        anchor_sum = sum(w for (i, w) in wj if i in het_j_idx)
-        other = total - anchor_sum
-        (anchor_sum > 0 && other > 0) || continue
-        scale = (target_frac * other / (1 - target_frac)) / anchor_sum
         for k in eachindex(wj)
             if wj[k][1] in het_j_idx
                 wj[k] = (wj[k][1], wj[k][2] * scale)

@@ -26,7 +26,7 @@ end
 
 function EmpiricalParams(;
     lognormal_sigma::Real = 1.0,
-    allele_imbalance::Real = 1.0,
+    allele_imbalance::Real = 1.2,  # > 1 gives chr1/chr2 imbalance for het genes; 1 = no imbalance
     anchor_j_fraction_range::Tuple{Real, Real} = (0.1, 0.3),
     p_hemi_v::Real = 0.03,
     p_hemi_d::Real = 0.05,
@@ -55,11 +55,11 @@ end
 
 Tunable parameters with defaults from KI donors: usage skew (lognormal_sigma, allele_imbalance),
 anchor J fraction range, and hemizygosity rates (p_hemi_v/d/j).
-Example: `Simulator(config, GenePools(), ki_donor_preset(allele_imbalance=2.0))`.
+Set `allele_imbalance` > 1 for chr1/chr2 weight imbalance at het genes (e.g. 2.0 → range 0.5–2); 1 = no imbalance.
 """
 function ki_donor_preset(;
     lognormal_sigma::Real = 1.0,
-    allele_imbalance::Real = 1.0,
+    allele_imbalance::Real = 1.2,  # > 1 gives chr1/chr2 imbalance for het genes; 1 = no imbalance
     anchor_j_fraction_range::Tuple{Real, Real} = (0.1, 0.3),
     p_hemi_v::Real = 0.03,
     p_hemi_d::Real = 0.05,

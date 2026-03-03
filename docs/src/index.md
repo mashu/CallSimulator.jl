@@ -15,10 +15,10 @@ Simulate V/D/J gene call tables (MIAIRR-style) with **ground-truth phased genoty
    DonorGenotype   (build_donor_genotype)
               |
               v
-   ExpressionProfile  (build_expression)   +   NoiseModel
+   ExpressionProfile  (build_expression)
               |
               v
-   Simulator  -->  simulate()
+   Simulator(genotype, config, expression, rng)  -->  simulate()
               |
               v
    calls_df    genotype_df    truth_phase_df
@@ -28,8 +28,8 @@ Simulate V/D/J gene call tables (MIAIRR-style) with **ground-truth phased genoty
 
 1. **Genotype** — `DonorGenotype` = which V/D/J genes the donor has and zygosity: homozygous, heterozygous, or hemizygous (gene on one chromosome only, useful as phasing anchor). Built from pools with `build_donor_genotype`.
 2. **Expression** — Weights per gene per chromosome; used to sample which V, which D, which J on each read. For **heterozygous** genes only, **allele imbalance** is applied: a ratio *r* (chr1 vs chr2 weight) is sampled once per gene from a log-uniform distribution on `allele_imbalance_range` (e.g. (0.3, 3.0)). Homozygous and hemizygous genes have no imbalance. Built with `build_expression(gt; ...)`.
-3. **Noise** — Corrupts calls: allele swap, D dropout. `NoiseConfig()` = default rates; `NoiseConfigNone` = no corruption.
-4. **Simulator** — Takes genotype + expression + noise; for each read picks one chromosome, samples V,D,J from it, applies noise, returns the three tables.
+3. **Noise** — Corrupts calls: allele swap, D dropout. Set in `SimulatorConfig` via `noise=NoiseConfig()` (default) or `noise=NoiseConfigNone`.
+4. **Simulator** — Holds genotype, config (which includes noise), expression, rng; for each read picks one chromosome, samples V,D,J from it, applies noise from config, returns the three tables.
 
 **Shortcut:** `Simulator(config, ki_donor_preset())` builds genotype and expression from preset defaults; you still choose noise in `config`.
 
@@ -46,7 +46,7 @@ cfg = SimulatorConfig(n_reads = 500, output_path = "calls.tsv")
 expression = build_expression(gt; rng = MersenneTwister(cfg.seed + 2),
     method = LogNormalExpr(estimated.lognormal_sigma),
     allele_imbalance_range = (1.0 / estimated.allele_imbalance, estimated.allele_imbalance))
-sim = Simulator(gt, cfg, expression, NoiseModel(cfg.noise), MersenneTwister(cfg.seed))
+sim = Simulator(gt, cfg, expression, MersenneTwister(cfg.seed))
 calls_df, genotype_df, truth_phase_df = simulate(sim)
 ```
 

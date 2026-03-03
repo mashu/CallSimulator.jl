@@ -12,6 +12,7 @@ module CallSimulator
 using CSV
 using DataFrames
 using Random
+using UnicodePlots
 
 include("Types.jl")
 include("GenePools.jl")
@@ -23,6 +24,7 @@ include("Empirical.jl")
 include("Output.jl")
 include("Simulator.jl")
 include("Validation.jl")
+include("ExpressionPlots.jl")
 
 export
     # Locus & types
@@ -37,7 +39,7 @@ export
     ZygositySpec, build_donor_genotype,
     # Expression
     ExpressionMethod, LogNormalExpr, UniformExpr,
-    ExpressionProfile, build_expression, weights,
+    ExpressionProfile, build_expression, weights, plot_expression,
     # Noise
     NoiseConfig, NoiseModel, NoiseConfigNone,
     NoiseType, NoNoise, AlleleSwap, D_Dropout,

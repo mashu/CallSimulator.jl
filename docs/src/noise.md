@@ -13,8 +13,11 @@ All are keyword arguments to `NoiseConfig(...)`.
 
 ## No corruption
 
+Use a config with `noise=NoiseConfigNone`, then build the simulator; noise is read from config.
+
 ```julia
-sim = Simulator(gt, config, expression, NoiseModel(NoiseConfigNone), rng)
+config = SimulatorConfig(..., noise = NoiseConfigNone)
+sim = Simulator(gt, config, expression, rng)
 ```
 
 Simulated calls will match the sampled (true) alleles; only ground-truth columns and phasing still differ from “perfect” if you use multiple chromosomes.
