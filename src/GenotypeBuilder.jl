@@ -59,7 +59,7 @@ end
     build_genotype(donor_id, v_spec, d_spec, j_spec; pool_v, pool_d, pool_j, rng, allele_suffix_hom, allele_suffix_het) -> DonorGenotype
 
 Build a diploid genotype. By default alleles use *01 (homozygous/hemizygous) and *01/*02 (heterozygous).
-Use `allele_suffix_het = ("*03", "*04")` etc. to get other IMGT-style allele names.
+Use `allele_suffix_het = ("*03", "*04")` etc. to get other allele names.
 """
 function build_genotype(
     donor_id::String,

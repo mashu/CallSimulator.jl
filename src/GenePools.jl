@@ -1,4 +1,4 @@
-# GenePools.jl: Default IMGT gene pools; access via dispatch on Locus type.
+# GenePools.jl: Default gene pools; access via dispatch on Locus type.
 
 default_gene_pool(::Type{V}) = default_gene_pool_v()
 default_gene_pool(::Type{D}) = default_gene_pool_d()
@@ -27,23 +27,15 @@ end
 
 default_gene_pool_j() = ["IGHJ1", "IGHJ2", "IGHJ3", "IGHJ4", "IGHJ5", "IGHJ6"]
 
-"""Confusion pairs for cross-gene miscall; dispatch by locus."""
-confusion_pairs(::Type{V}) = default_v_confusion_pairs()
-confusion_pairs(::Type{D}) = default_d_confusion_pairs()
-confusion_pairs(::Type{J}) = Tuple{String, String}[]
+"""
+    GenePools(; v, d, j)
 
-function default_v_confusion_pairs()
-    [
-        ("IGHV3-30", "IGHV3-33"),
-        ("IGHV3-30", "IGHV3-30-3"),
-        ("IGHV4-30-2", "IGHV4-31"),
-        ("IGHV1-69", "IGHV1-69D"),
-    ]
+V/D/J gene name vectors for genotype building. Omit arguments to use default gene pools.
+Use with `Simulator(config, GenePools(), ki_donor_preset())` so you can tune params without re-specifying genes.
+"""
+struct GenePools
+    v::Vector{String}
+    d::Vector{String}
+    j::Vector{String}
 end
-
-function default_d_confusion_pairs()
-    [
-        ("IGHD3-9", "IGHD3-10"),
-        ("IGHD2-2", "IGHD2-8"),
-    ]
-end
+GenePools(; v=default_gene_pool_v(), d=default_gene_pool_d(), j=default_gene_pool_j()) = GenePools(v, d, j)

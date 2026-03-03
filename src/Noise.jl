@@ -10,6 +10,12 @@ struct NoiseConfig
     p_d_dropout::Float64
 end
 
+function Base.show(io::IO, ::MIME"text/plain", cfg::NoiseConfig)
+    print(io, "NoiseConfig(")
+    print(io, "p_allele_v=", cfg.p_allele_v, ", p_allele_d=", cfg.p_allele_d,
+          ", p_allele_j=", cfg.p_allele_j, ", p_d_dropout=", cfg.p_d_dropout, ")")
+end
+
 p_allele_miscall(cfg::NoiseConfig, ::Type{V}) = cfg.p_allele_v
 p_allele_miscall(cfg::NoiseConfig, ::Type{D}) = cfg.p_allele_d
 p_allele_miscall(cfg::NoiseConfig, ::Type{J}) = cfg.p_allele_j
@@ -43,6 +49,12 @@ const NoiseConfigNone = NoiseConfig(0.0, 0.0, 0.0, 0.0)
 """Callable: (rng, gt, L, chr, gene_entry, true_allele) -> (called_allele, NoiseType)."""
 struct NoiseModel
     cfg::NoiseConfig
+end
+
+function Base.show(io::IO, ::MIME"text/plain", nm::NoiseModel)
+    print(io, "NoiseModel(")
+    show(io, MIME("text/plain"), nm.cfg)
+    print(io, ")")
 end
 
 function (noise::NoiseModel)(

@@ -21,6 +21,6 @@
     @test 1 <= idx_v <= length(gt.genes_v)
     @test 1 <= idx_j <= length(gt.genes_j)
 
-    ep2 = build_expression(gt; rng = Random.MersenneTwister(3), method = LogNormalExpr(0.5), anchor_j_fraction = 0.3)
+    ep2 = build_expression(gt; rng = Random.MersenneTwister(3), method = LogNormalExpr(0.5), anchor_j_fraction = (0.2, 0.4))
     @test ep2 isa ExpressionProfile
 end

@@ -1,6 +1,11 @@
 # CallSimulator.jl: Simulate V/D/J call tables (MIAIRR-style) with phased genotype.
 # Idiomatic Julia: Locus types (V, D, J), AlleleState hierarchy, parametric GeneEntry{L},
 # locus-indexed DonorGenotype, callable ExpressionProfile and NoiseModel.
+#
+# API layering:
+# - SimulatorConfig = run settings only (n_reads, seed, output_path, subject_id, noise).
+# - GenePools + EmpiricalParams = donor and expression recipe (gene lists, p_hemi_*, lognormal_sigma, allele_imbalance, anchor_j_fraction_range).
+# - Simulator(config, preset) or Simulator(config, GenePools(), params) builds genotype and expression from that recipe, then holds config + built genotype + built expression + rng. Noise is read from config when sampling.
 
 module CallSimulator
 
@@ -28,7 +33,7 @@ export
     zygosity, zygosity_short, zygosity_counts, is_available, is_present, allele_on, allele_display_string, phase_allele_string, genes, has_locus,
     homozygous_gene, heterozygous_gene, hemizygous_gene,
     # Gene pools & genotype build
-    default_gene_pool, confusion_pairs,
+    default_gene_pool, GenePools,
     ZygositySpec, build_donor_genotype,
     # Expression
     ExpressionMethod, LogNormalExpr, UniformExpr,

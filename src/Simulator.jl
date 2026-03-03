@@ -2,39 +2,63 @@
 
 using Random
 
-"""Genotype, config, expression, noise, RNG. Call `simulate(sim)` for (calls_df, genotype_df, truth_phase_df)."""
+"""Genotype, config, expression, RNG. Call `simulate(sim)` for (calls_df, genotype_df, truth_phase_df)."""
 struct Simulator
     genotype::DonorGenotype
     config::SimulatorConfig
     expression::ExpressionProfile
-    noise::NoiseModel
     rng::Random.AbstractRNG
+    Simulator(gt, cfg, expr, rng) = new(gt, cfg, expr, rng)
 end
 
-"""Build Simulator from config and empirical preset (genotype + expression + noise)."""
+function Base.show(io::IO, ::MIME"text/plain", sim::Simulator)
+    nv = length(sim.genotype.genes_v)
+    nd = length(sim.genotype.genes_d)
+    nj = length(sim.genotype.genes_j)
+    println(io, "Simulator:")
+    println(io, "  genotype: ", sim.genotype.donor_id, " (", nv, " V, ", nd, " D, ", nj, " J genes)")
+    print(io, "  config: ")
+    show(io, MIME("text/plain"), sim.config)
+    println(io)
+    print(io, "  expression: ")
+    show(io, MIME("text/plain"), sim.expression)
+    println(io)
+    print(io, "  rng: ", typeof(sim.rng))
+end
+
+"""Build Simulator from config and params; uses default gene pools. Shortcut for `Simulator(config, GenePools(), params)`."""
 function Simulator(
     config::SimulatorConfig,
-    estimated::EmpiricalParams;
+    params::EmpiricalParams;
+    rng::Random.AbstractRNG = Random.MersenneTwister(config.seed),
+)
+    Simulator(config, GenePools(), params; rng = rng)
+end
+
+"""Build Simulator from config, gene pools, and params (genotype + expression + noise)."""
+function Simulator(
+    config::SimulatorConfig,
+    gene_pools::GenePools,
+    params::EmpiricalParams;
     rng::Random.AbstractRNG = Random.MersenneTwister(config.seed),
 )
     gt = build_donor_genotype(
         config.subject_id;
-        pool_v = estimated.gene_pool_v,
-        pool_d = estimated.gene_pool_d,
-        pool_j = estimated.gene_pool_j,
-        p_hemi_v = estimated.p_hemi_v,
-        p_hemi_d = estimated.p_hemi_d,
-        p_hemi_j = estimated.p_hemi_j,
+        pool_v = gene_pools.v,
+        pool_d = gene_pools.d,
+        pool_j = gene_pools.j,
+        p_hemi_v = params.p_hemi_v,
+        p_hemi_d = params.p_hemi_d,
+        p_hemi_j = params.p_hemi_j,
         rng = Random.MersenneTwister(config.seed + 1),
     )
-    anchor = config.anchor_j_fraction !== nothing ? config.anchor_j_fraction : estimated.anchor_j_fraction_default
     expression = build_expression(gt;
         rng = Random.MersenneTwister(config.seed + 2),
-        method = LogNormalExpr(estimated.lognormal_sigma),
-        allele_imbalance_range = (1.0 / estimated.allele_imbalance, estimated.allele_imbalance),
-        anchor_j_fraction = anchor,
+        method = LogNormalExpr(params.lognormal_sigma),
+        allele_imbalance_range = (1.0 / params.allele_imbalance, params.allele_imbalance),
+        anchor_j_fraction = params.anchor_j_fraction_range,
     )
-    Simulator(gt, config, expression, NoiseModel(config.noise), rng)
+    Simulator(gt, config, expression, rng)
 end
 
 """Sample one locus for this chromosome: expression → true allele → noise → (call, true_allele, noise_label)."""
@@ -43,7 +67,7 @@ function sample_locus(sim::Simulator, gt::DonorGenotype, ::Type{L}, chr::Int) wh
     idx = sim.expression(rng, gt, L, chr)
     g = genes(gt, L)[idx]
     true_allele = allele_on(g, chr)
-    call, nt = sim.noise(rng, gt, L, chr, g, true_allele)
+    call, nt = NoiseModel(sim.config.noise)(rng, gt, L, chr, g, true_allele)
     (call, true_allele, noise_type_string(nt))
 end
 
@@ -116,5 +140,5 @@ function simulate(sim::Simulator)
     (calls_df, genotype_table(gt), truth_phase_table(gt))
 end
 
-(sim::Simulator)(rng::Random.AbstractRNG) = simulate(Simulator(sim.genotype, sim.config, sim.expression, sim.noise, rng))
+(sim::Simulator)(rng::Random.AbstractRNG) = simulate(Simulator(sim.genotype, sim.config, sim.expression, rng))
 (sim::Simulator)() = simulate(sim)

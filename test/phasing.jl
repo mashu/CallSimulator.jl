@@ -24,7 +24,7 @@
         noise = noise,
     )
     expression = build_expression(gt; rng = Random.MersenneTwister(777), method = UniformExpr())
-    sim = Simulator(gt, config, expression, NoiseModel(noise), Random.MersenneTwister(777))
+    sim = Simulator(gt, config, expression, Random.MersenneTwister(777))
     calls_df, genotype_df, truth_phase_df = simulate(sim)
 
     @test truth_phase_df == tp

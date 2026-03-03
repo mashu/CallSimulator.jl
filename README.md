@@ -18,3 +18,5 @@ calls_df, genotype_df, truth_phase_df = simulate(sim)
 write_simulation_output(calls_df, genotype_df, truth_phase_df;
     calls_path = "calls.tsv", genotype_path = "genotype.tsv", truth_phase_path = "truth_phase.tsv")
 ```
+
+Gene pools (V/D/J lists) are separate from tunable parameters: `Simulator(config, GenePools(), ki_donor_preset(allele_imbalance=2.0))` uses default genes and only overrides params.

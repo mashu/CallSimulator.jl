@@ -11,9 +11,49 @@ end
 struct UniformExpr <: ExpressionMethod end
 (::UniformExpr)(rng::Random.AbstractRNG) = 1.0
 
+"""Weights for one chromosome: (gene_index, weight) pairs for expression sampling."""
+struct ChromosomeWeights <: AbstractVector{Tuple{Int, Float64}}
+    data::Vector{Tuple{Int, Float64}}
+end
+Base.size(cw::ChromosomeWeights) = size(cw.data)
+Base.getindex(cw::ChromosomeWeights, i::Int) = cw.data[i]
+Base.IndexStyle(::Type{<:ChromosomeWeights}) = IndexLinear()
+
+function Base.show(io::IO, ::MIME"text/plain", cw::ChromosomeWeights)
+    n = length(cw.data)
+    print(io, "ChromosomeWeights(", n, " genes, gene_index => weight):\n")
+    for p in cw.data
+        print(io, " ", p, "\n")
+    end
+end
+
 struct LocusWeights
-    chr1::Vector{Tuple{Int, Float64}}
-    chr2::Vector{Tuple{Int, Float64}}
+    chr1::ChromosomeWeights
+    chr2::ChromosomeWeights
+end
+
+function weight_preview(io::IO, cw::ChromosomeWeights, maxshow::Int=4)
+    n = length(cw.data)
+    if n <= maxshow
+        for p in cw.data
+            print(io, " ", p)
+        end
+    else
+        for i in 1:maxshow
+            print(io, " ", cw.data[i])
+        end
+        print(io, "  … ", n - maxshow, " more")
+    end
+end
+
+function Base.show(io::IO, ::MIME"text/plain", lw::LocusWeights)
+    n = length(lw.chr1)
+    print(io, "LocusWeights(", n, " genes × 2 chromosomes, gene_index => weight):\n")
+    print(io, "  chr1:")
+    weight_preview(io, lw.chr1)
+    print(io, "\n  chr2:")
+    weight_preview(io, lw.chr2)
+    print(io, "\n")
 end
 
 """
@@ -28,12 +68,19 @@ struct ExpressionProfile
     j::LocusWeights
 end
 
+function Base.show(io::IO, ::MIME"text/plain", ep::ExpressionProfile)
+    nv = length(ep.v.chr1)
+    nd = length(ep.d.chr1)
+    nj = length(ep.j.chr1)
+    print(io, "ExpressionProfile(V: ", nv, " genes, D: ", nd, ", J: ", nj, ")")
+end
+
 weights(ep::ExpressionProfile, ::Type{V}, chr::Int) = chr == 1 ? ep.v.chr1 : ep.v.chr2
 weights(ep::ExpressionProfile, ::Type{D}, chr::Int) = chr == 1 ? ep.d.chr1 : ep.d.chr2
 weights(ep::ExpressionProfile, ::Type{J}, chr::Int) = chr == 1 ? ep.j.chr1 : ep.j.chr2
 
 """Weighted sample from (index, weight) pairs; returns index."""
-function weighted_sample_index(rng::Random.AbstractRNG, pairs::Vector{Tuple{Int, Float64}})
+function weighted_sample_index(rng::Random.AbstractRNG, pairs::AbstractVector{Tuple{Int, Float64}})
     isempty(pairs) && error("Cannot sample from empty weights")
     total = sum(last, pairs)
     total > 0.0 || return first(pairs)[1]
@@ -59,7 +106,7 @@ function build_expression(
     rng::Random.AbstractRNG = Random.GLOBAL_RNG,
     method::ExpressionMethod = LogNormalExpr(1.0),
     allele_imbalance_range::Tuple{Float64, Float64} = (0.3, 3.0),
-    anchor_j_fraction::Union{Nothing, Float64} = nothing,
+    anchor_j_fraction::Union{Nothing, Tuple{Float64, Float64}} = nothing,
 )
     wv1, wv2 = Tuple{Int, Float64}[], Tuple{Int, Float64}[]
     wd1, wd2 = Tuple{Int, Float64}[], Tuple{Int, Float64}[]
@@ -90,14 +137,16 @@ function build_expression(
     end
 
     if anchor_j_fraction !== nothing
-        (0.0 < anchor_j_fraction < 1.0) || throw(ArgumentError("anchor_j_fraction must be in (0,1)"))
-        rescale_anchor_j!(wj1, wj2, gt, anchor_j_fraction)
+        lo, hi = anchor_j_fraction[1], anchor_j_fraction[2]
+        (0.0 < lo < hi < 1.0) || throw(ArgumentError("anchor_j_fraction must be (min, max) with 0 < min < max < 1"))
+        target_frac = rand(rng) * (hi - lo) + lo
+        rescale_anchor_j!(wj1, wj2, gt, target_frac)
     end
 
     ExpressionProfile(
-        LocusWeights(wv1, wv2),
-        LocusWeights(wd1, wd2),
-        LocusWeights(wj1, wj2),
+        LocusWeights(ChromosomeWeights(wv1), ChromosomeWeights(wv2)),
+        LocusWeights(ChromosomeWeights(wd1), ChromosomeWeights(wd2)),
+        LocusWeights(ChromosomeWeights(wj1), ChromosomeWeights(wj2)),
     )
 end
 
