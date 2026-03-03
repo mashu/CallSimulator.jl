@@ -32,7 +32,6 @@ function Simulator(
         rng = Random.MersenneTwister(config.seed + 2),
         method = LogNormalExpr(estimated.lognormal_sigma),
         allele_imbalance_range = (1.0 / estimated.allele_imbalance, estimated.allele_imbalance),
-        cis_sigma = config.cis_sigma,
         anchor_j_fraction = anchor,
     )
     Simulator(gt, config, expression, NoiseModel(config.noise), rng)
@@ -46,17 +45,6 @@ function sample_locus(sim::Simulator, gt::DonorGenotype, ::Type{L}, chr::Int) wh
     true_allele = allele_on(g, chr)
     call, nt = sim.noise(rng, gt, L, chr, g, true_allele)
     (call, true_allele, noise_type_string(nt))
-end
-
-"""Duplicate count: geometric-like (mean = mean_dup, min 1)."""
-function draw_duplicate_count(rng::Random.AbstractRNG, mean_dup::Float64)
-    p = 1.0 / mean_dup
-    c = 1
-    while rand(rng) < (1 - p)
-        c += 1
-        c > 10_000 && break
-    end
-    c
 end
 
 function simulate(sim::Simulator)
@@ -104,7 +92,7 @@ function simulate(sim::Simulator)
         push!(sequence_ids, "sim_$(read_idx)")
         push!(d_starts, 1)
         push!(d_ends, isempty(d_call) ? 0 : 12)
-        push!(duplicate_counts, draw_duplicate_count(rng, cfg.mean_duplicate_count))
+        push!(duplicate_counts, 1)
         push!(true_chr, chr)
         push!(true_v, tv)
         push!(true_j, tj)

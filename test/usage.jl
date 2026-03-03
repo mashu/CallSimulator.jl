@@ -1,6 +1,6 @@
 # Expression profile replaces old WeightedUsage; test build_expression and sampling.
 @testset "Expression (build_expression, ExpressionProfile functor)" begin
-    gt = build_genotype(
+    gt = CallSimulator.build_genotype(
         "donor",
         ZygositySpec(hom=1, het=1, hemi=0),
         ZygositySpec(hom=0, het=0, hemi=0),

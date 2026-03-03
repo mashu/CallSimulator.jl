@@ -7,8 +7,6 @@ module CallSimulator
 using CSV
 using DataFrames
 using Random
-using ArgParse
-using Requires
 
 include("Types.jl")
 include("GenePools.jl")
@@ -20,7 +18,6 @@ include("Empirical.jl")
 include("Output.jl")
 include("Simulator.jl")
 include("Validation.jl")
-include("CLI.jl")
 
 export
     # Locus & types
@@ -34,11 +31,11 @@ export
     default_gene_pool, confusion_pairs,
     ZygositySpec, build_donor_genotype,
     # Expression
-    ExpressionMethod, LogNormalExpr, ZipfExpr, DirichletExpr, UniformExpr,
+    ExpressionMethod, LogNormalExpr, UniformExpr,
     ExpressionProfile, build_expression, weights,
     # Noise
     NoiseConfig, NoiseModel, NoiseConfigNone,
-    NoiseType, NoNoise, AlleleSwap, GeneConfusion, D_Dropout, NovelAllele,
+    NoiseType, NoNoise, AlleleSwap, D_Dropout,
     noise_type_string,
     # Config & run
     SimulatorConfig,
@@ -46,7 +43,5 @@ export
     genotype_table, truth_phase_table, build_calls_df,
     write_calls, write_genotype, write_truth_phase, write_simulation_output,
     Simulator, simulate,
-    check_airr_columns, summarize_simulation, compare_with_real, gini,
-    run_cli
-
+    check_airr_columns, summarize_simulation, compare_with_real, gini
 end

@@ -3,7 +3,7 @@
     cfg = NoiseConfigNone
     noise = NoiseModel(cfg)
     rng = Random.MersenneTwister(99)
-    gt = build_genotype(
+    gt = CallSimulator.build_genotype(
         "t",
         ZygositySpec(1, 1, 0),
         ZygositySpec(0, 0, 0),
@@ -19,7 +19,7 @@
     @test nt == NoNoise
     @test called == allele_on(g_v, 1)
 
-    cfg2 = NoiseConfig(p_allele_v = 1.0, p_allele_d = 0.0, p_allele_j = 0.0, p_gene_v = 0.0, p_gene_d = 0.0, p_gene_j = 0.0, p_d_dropout = 0.0, p_novel = 0.0)
+    cfg2 = NoiseConfig(p_allele_v = 1.0, p_allele_d = 0.0, p_allele_j = 0.0, p_d_dropout = 0.0)
     noise2 = NoiseModel(cfg2)
     called2, nt2 = noise2(rng, gt, V, 1, g_v, allele_on(g_v, 1))
     @test nt2 == AlleleSwap

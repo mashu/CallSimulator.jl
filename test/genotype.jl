@@ -16,7 +16,7 @@
     @test allele_on(g_hemi, 1) == "IGHD1-1*01"
     @test_throws Exception allele_on(g_hemi, 2)
 
-    gt = build_genotype(
+    gt = CallSimulator.build_genotype(
         "donor1",
         ZygositySpec(hom=1, het=1, hemi=0),
         ZygositySpec(hom=0, het=0, hemi=0),

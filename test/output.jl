@@ -15,7 +15,7 @@
     @test df.duplicate_count == dup
     @test all(df.locus .== "IGH")
 
-    gt = build_genotype(
+    gt = CallSimulator.build_genotype(
         "donor1",
         ZygositySpec(hom=1, het=0, hemi=0),
         ZygositySpec(hom=0, het=0, hemi=0),
@@ -36,7 +36,7 @@
     @test nrow(tp_df) >= 1
     @test "het" in tp_df.zygosity || "hemi" in tp_df.zygosity
 
-    gt_hom = build_genotype("d", ZygositySpec(1, 0, 0), ZygositySpec(0, 0, 0), ZygositySpec(1, 0, 0); pool_v = ["V1"], pool_d = String[], pool_j = ["J1"], rng = Random.MersenneTwister(0))
+    gt_hom = CallSimulator.build_genotype("d", ZygositySpec(1, 0, 0), ZygositySpec(0, 0, 0), ZygositySpec(1, 0, 0); pool_v = ["V1"], pool_d = String[], pool_j = ["J1"], rng = Random.MersenneTwister(0))
     @test nrow(truth_phase_table(gt_hom)) == 0
 
     td = mktempdir()

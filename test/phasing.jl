@@ -1,5 +1,5 @@
 @testset "Phasing (ground truth vs simulator output)" begin
-    gt = build_genotype(
+    gt = CallSimulator.build_genotype(
         "phasing_test",
         ZygositySpec(hom=1, het=0, hemi=0),
         ZygositySpec(hom=0, het=0, hemi=0),

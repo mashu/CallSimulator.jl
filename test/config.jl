@@ -1,7 +1,6 @@
 @testset "Config" begin
     noise = NoiseConfig()
     @test noise.p_allele_v >= 0.0
-    @test noise.p_gene_v >= 0.0
     @test noise.p_d_dropout >= 0.0
 
     cfg = SimulatorConfig(n_reads = 1000, output_path = "out.tsv", noise = noise)
@@ -9,8 +8,6 @@
     @test cfg.min_unique_vdj == 0
     @test cfg.subject_id == "sim_donor"
     @test cfg.anchor_j_fraction === nothing
-    @test cfg.mean_duplicate_count >= 1.0
-    @test cfg.cis_sigma >= 0.0
 
     cfg2 = SimulatorConfig(n_reads = 500, output_path = "c.tsv", anchor_j_fraction = 0.3)
     @test cfg2.anchor_j_fraction == 0.3

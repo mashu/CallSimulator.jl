@@ -8,12 +8,15 @@ using CallSimulator
 
 makedocs(
     sitename = "CallSimulator",
-    format = Documenter.HTML(prettyurls = get(ENV, "CI", "false") == "true"),
+    format = Documenter.HTML(
+        prettyurls = get(ENV, "CI", "false") == "true",
+        edit_link = "main",
+        repolink = "https://github.com/mashu/CallSimulator.jl",
+    ),
     modules = [CallSimulator],
     remotes = nothing,
     pages = [
         "Home" => "index.md",
-        "Standalone usage" => "standalone.md",
         "Noise model" => "noise.md",
         "API reference" => "api.md",
     ],

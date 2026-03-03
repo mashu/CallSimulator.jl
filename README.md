@@ -5,7 +5,7 @@
 [![Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://mashu.github.io/CallSimulator.jl/stable)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Simulate MIAIRR-style V/D/J call tables with ground-truth phased genotype for testing phasing and assignment. Each read has one V, one D, one J from the same chromosome; the simulator records true alleles and applied noise.
+Simulate MIAIRR-style V/D/J call tables with ground-truth phased genotype for testing phasing and assignment. Each read has one V, one D, one J from the same chromosome; the simulator records true alleles and optional noise (allele swap, D dropout). Genotypes support **homozygous**, **heterozygous**, and **hemizygous** genes; expression can skew toward one allele per heterozygous gene (**allele imbalance**).
 
 ## Example
 

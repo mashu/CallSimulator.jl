@@ -8,16 +8,6 @@ struct LogNormalExpr <: ExpressionMethod
 end
 (m::LogNormalExpr)(rng::Random.AbstractRNG) = exp(-m.σ^2 / 2 + m.σ * randn(rng))
 
-struct ZipfExpr <: ExpressionMethod
-    α::Float64
-end
-(m::ZipfExpr)(rng::Random.AbstractRNG) = 1.0 / (rand(rng) * 10 + 0.5)^m.α
-
-struct DirichletExpr <: ExpressionMethod
-    α::Float64
-end
-(m::DirichletExpr)(rng::Random.AbstractRNG) = (α = max(m.α, 0.01); randexp(rng) * rand(rng)^(1.0 / α - 1.0))
-
 struct UniformExpr <: ExpressionMethod end
 (::UniformExpr)(rng::Random.AbstractRNG) = 1.0
 
@@ -69,7 +59,6 @@ function build_expression(
     rng::Random.AbstractRNG = Random.GLOBAL_RNG,
     method::ExpressionMethod = LogNormalExpr(1.0),
     allele_imbalance_range::Tuple{Float64, Float64} = (0.3, 3.0),
-    cis_sigma::Float64 = 0.35,
     anchor_j_fraction::Union{Nothing, Float64} = nothing,
 )
     wv1, wv2 = Tuple{Int, Float64}[], Tuple{Int, Float64}[]
@@ -83,14 +72,12 @@ function build_expression(
         )
         for (i, g) in enumerate(gs)
             base = method(rng)
-            cis1 = exp(cis_sigma * randn(rng))
-            cis2 = exp(cis_sigma * randn(rng))
             w1 = w2 = 0.0
             if is_available(g, 1)
-                w1 = base * cis1
+                w1 = base
             end
             if is_available(g, 2)
-                w2 = base * cis2
+                w2 = base
             end
             if is_available(g, 1) && is_available(g, 2) && zygosity(g) == Heterozygous
                 r = draw_imbalance(rng, allele_imbalance_range[1], allele_imbalance_range[2])
